@@ -64,3 +64,5 @@ export const compileRenderPlan: RendererContract["compile"] = (
     })
   }))
 });
+
+export const compile: RendererContract["compile"] = compileRenderPlan;
