@@ -1,6 +1,6 @@
 {
-  "name": "@personalizer/renderer-server-chromium",
-  "version": "0.1.0",
+  "name": "@personalizer/renderer-canvas",
+  "version": "0.2.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,9 +15,14 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "test": "vitest run --root ../../ packages/renderer-canvas/test",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit"
   },
   "dependencies": {
     "@personalizer/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.9"
   }
 }

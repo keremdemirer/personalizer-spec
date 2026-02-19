@@ -17,7 +17,7 @@ export interface ResolveRenderModelOptions {
   assets?: Record<string, unknown>;
 }
 
-export interface RenderModel {
+export interface ResolvedRenderModel {
   designTemplate: ResolvedDesignTemplate;
   effectsTemplate: EffectsTemplate;
   resolvedInputs: Record<string, unknown>;
@@ -96,10 +96,7 @@ const getByPath = (source: unknown, path: string): unknown => {
   return current;
 };
 
-const readFromInputs = (
-  inputs: Record<string, unknown>,
-  path: string
-): unknown => {
+const readFromInputs = (inputs: Record<string, unknown>, path: string): unknown => {
   const direct = getByPath(inputs, path);
   if (direct !== undefined) {
     return direct;
@@ -109,10 +106,7 @@ const readFromInputs = (
   return getByPath(inputs, withoutPrefix);
 };
 
-const readFromAssets = (
-  assets: Record<string, unknown>,
-  path: string
-): unknown => {
+const readFromAssets = (assets: Record<string, unknown>, path: string): unknown => {
   const direct = getByPath(assets, path);
   if (direct !== undefined) {
     return direct;
@@ -226,7 +220,7 @@ const resolveBindings = (
 
 export const resolveRenderModel = (
   options: ResolveRenderModelOptions
-): RenderModel => {
+): ResolvedRenderModel => {
   const validationResult = validateTemplates(
     options.designTemplate,
     options.effectsTemplate
@@ -274,9 +268,7 @@ export const resolveRenderModel = (
           issue.path.length === 0
             ? "root"
             : issue.path
-                .map((part) =>
-                  typeof part === "number" ? `[${part}]` : String(part)
-                )
+                .map((part) => (typeof part === "number" ? `[${part}]` : String(part)))
                 .join(".")
                 .replace(/\.\[/g, "["),
         message: issue.message

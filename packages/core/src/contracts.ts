@@ -1,68 +1,71 @@
-import type { EffectsTemplate, ResolvedDesignTemplate } from "./schemas.js";
 import { computeRenderKey } from "./render-key.js";
+import { resolveRenderModel, type ResolvedRenderModel } from "./bindings.js";
 
-export interface RenderPlanScene {
-  sceneId: string;
-  renderKey: string;
+export interface CompileAssets extends Record<string, unknown> {
+  contentHashes?: Record<string, string>;
+  assetContentHashes?: Record<string, string>;
+  hashes?: Record<string, string>;
 }
 
-export interface RenderPlan {
-  templateId: string;
-  templateVersion: string;
-  resolvedInputs: Record<string, unknown>;
+export interface RenderModel extends ResolvedRenderModel {
+  assets: CompileAssets;
   assetContentHashes: Record<string, string>;
-  scenes: RenderPlanScene[];
+  sceneRenderKeys: Record<string, string>;
 }
 
-export interface RenderTarget {
-  sceneId: string;
-  format: "png" | "bitmap";
-}
+const readStringMap = (value: unknown): Record<string, string> => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
 
-export interface RenderOutput {
-  sceneId: string;
-  format: "png" | "bitmap";
-  mimeType: string;
-  bytes: Uint8Array;
-}
+  const out: Record<string, string> = {};
+  for (const [key, nested] of Object.entries(value)) {
+    if (typeof nested === "string") {
+      out[key] = nested;
+    }
+  }
 
-export interface RenderOutputs {
-  outputs: RenderOutput[];
-}
+  return out;
+};
 
-export interface RendererContract {
-  compile: (
-    designTemplate: ResolvedDesignTemplate,
-    effectsTemplate: EffectsTemplate,
-    resolvedInputs: Record<string, unknown>,
-    assets: Record<string, string>
-  ) => RenderPlan;
-  render: (
-    renderPlan: RenderPlan,
-    target: RenderTarget
-  ) => Promise<RenderOutputs> | RenderOutputs;
-}
+const extractAssetContentHashes = (assets: CompileAssets): Record<string, string> => {
+  return {
+    ...readStringMap(assets.assetContentHashes),
+    ...readStringMap(assets.contentHashes),
+    ...readStringMap(assets.hashes)
+  };
+};
 
-export const compileRenderPlan: RendererContract["compile"] = (
-  designTemplate,
-  _effectsTemplate,
-  resolvedInputs,
-  assets
-) => ({
-  templateId: designTemplate.templateId,
-  templateVersion: designTemplate.templateVersion,
-  resolvedInputs,
-  assetContentHashes: assets,
-  scenes: designTemplate.scenes.map((scene) => ({
-    sceneId: scene.sceneId,
-    renderKey: computeRenderKey({
-      templateId: designTemplate.templateId,
-      templateVersion: designTemplate.templateVersion,
+export const compile = (
+  designTemplate: unknown,
+  effectsTemplate: unknown,
+  resolvedInputs: Record<string, unknown>,
+  assets: CompileAssets = {}
+): RenderModel => {
+  const resolved = resolveRenderModel({
+    designTemplate,
+    effectsTemplate,
+    inputs: resolvedInputs,
+    assets
+  });
+
+  const assetContentHashes = extractAssetContentHashes(assets);
+
+  const sceneRenderKeys: Record<string, string> = {};
+  for (const scene of resolved.designTemplate.scenes) {
+    sceneRenderKeys[scene.sceneId] = computeRenderKey({
+      templateId: resolved.designTemplate.templateId,
+      templateVersion: resolved.designTemplate.templateVersion,
       sceneId: scene.sceneId,
-      resolvedInputs,
-      assetContentHashes: assets
-    })
-  }))
-});
+      resolvedInputs: resolved.resolvedInputs,
+      assetContentHashes
+    });
+  }
 
-export const compile: RendererContract["compile"] = compileRenderPlan;
+  return {
+    ...resolved,
+    assets,
+    assetContentHashes,
+    sceneRenderKeys
+  };
+};

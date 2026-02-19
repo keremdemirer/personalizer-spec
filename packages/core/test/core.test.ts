@@ -81,11 +81,15 @@ describe("core validator and resolver", () => {
       effectsTemplate,
       inputs
     });
+    const firstScene = renderModel.designTemplate.scenes[0];
+    if (!firstScene) {
+      throw new Error("expected at least one scene");
+    }
 
     const keyA = computeRenderKey({
       templateId: renderModel.designTemplate.templateId,
       templateVersion: renderModel.designTemplate.templateVersion,
-      sceneId: renderModel.designTemplate.scenes[0].sceneId,
+      sceneId: firstScene.sceneId,
       resolvedInputs: renderModel.resolvedInputs,
       assetContentHashes: {
         b: "bbb",
@@ -96,7 +100,7 @@ describe("core validator and resolver", () => {
     const keyB = computeRenderKey({
       templateId: renderModel.designTemplate.templateId,
       templateVersion: renderModel.designTemplate.templateVersion,
-      sceneId: renderModel.designTemplate.scenes[0].sceneId,
+      sceneId: firstScene.sceneId,
       resolvedInputs: { ...renderModel.resolvedInputs },
       assetContentHashes: {
         a: "aaa",
@@ -108,5 +112,63 @@ describe("core validator and resolver", () => {
 
     expect(keyA).toBe(keyB);
     expect(keyA).toBe(expectedKey);
+  });
+
+  it("fails when a scene node ref is missing", async () => {
+    const [designTemplate, effectsTemplate] = await Promise.all([
+      readJsonFixture<Record<string, unknown>>("minimal-design.json"),
+      readJsonFixture<Record<string, unknown>>("minimal-effects.json")
+    ]);
+
+    const brokenDesign = {
+      ...designTemplate,
+      scenes: [
+        {
+          ...((designTemplate.scenes as Array<Record<string, unknown>>)[0] ?? {}),
+          background: [{ $ref: "node:not-found" }]
+        }
+      ]
+    };
+
+    const result = validateTemplates(brokenDesign, effectsTemplate);
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      return;
+    }
+    expect(
+      result.diagnostics.some((entry) =>
+        entry.message.includes("Referenced node 'not-found'")
+      )
+    ).toBe(true);
+  });
+
+  it("fails when an effect chain ref is missing", async () => {
+    const [designTemplate, effectsTemplate] = await Promise.all([
+      readJsonFixture<Record<string, unknown>>("minimal-design.json"),
+      readJsonFixture<Record<string, unknown>>("minimal-effects.json")
+    ]);
+
+    const nodes = designTemplate.nodes as Record<string, Record<string, unknown>>;
+    const brokenDesign = {
+      ...designTemplate,
+      nodes: {
+        ...nodes,
+        name: {
+          ...(nodes.name ?? {}),
+          effects: { $ref: "effect:not-found" }
+        }
+      }
+    };
+
+    const result = validateTemplates(brokenDesign, effectsTemplate);
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      return;
+    }
+    expect(
+      result.diagnostics.some((entry) =>
+        entry.message.includes("Referenced effect chain 'not-found'")
+      )
+    ).toBe(true);
   });
 });

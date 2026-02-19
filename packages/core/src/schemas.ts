@@ -216,7 +216,7 @@ export const designTemplateSchema = z
     templateId: z.string().min(1),
     templateVersion: z.string().regex(semverRegex, "Invalid semver"),
     assets: designAssetsSchema.optional(),
-    scenes: z.array(designSceneSchema),
+    scenes: z.array(designSceneSchema).min(1),
     nodes: z.record(z.string().min(1), designNodeSchema)
   })
   .strict();
@@ -227,7 +227,7 @@ export const resolvedDesignTemplateSchema = z
     templateId: z.string().min(1),
     templateVersion: z.string().regex(semverRegex, "Invalid semver"),
     assets: designAssetsSchema.optional(),
-    scenes: z.array(designSceneSchema),
+    scenes: z.array(designSceneSchema).min(1),
     nodes: z.record(z.string().min(1), resolvedDesignNodeSchema)
   })
   .strict();

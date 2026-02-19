@@ -17,13 +17,9 @@
     "types": ["node"],
     "paths": {
       "@personalizer/core": ["packages/core/src/index.ts"],
-      "@personalizer/react": ["packages/react/src/index.ts"],
-      "@personalizer/renderer-client-canvas": [
-        "packages/renderer-client-canvas/src/index.ts"
-      ],
-      "@personalizer/renderer-server-chromium": [
-        "packages/renderer-server-chromium/src/index.ts"
-      ]
+      "@personalizer/renderer-canvas": ["packages/renderer-canvas/src/index.ts"],
+      "@personalizer/elements": ["packages/elements/src/index.ts"],
+      "@personalizer/elements/register": ["packages/elements/src/register.ts"]
     }
   }
 }
