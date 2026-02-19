@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { compile } from "@personalizer/core";
+import { compile } from "../../core/src/index.ts";
 import { renderToCanvas } from "../src/index.js";
 
 const design = {

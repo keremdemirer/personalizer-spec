@@ -15,7 +15,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "test": "vitest run --root ../../ packages/renderer-canvas/test",
+    "test": "vitest run --root ../../ packages/renderer-canvas/test/renderer-canvas.test.ts",
     "typecheck": "tsc -p tsconfig.build.json --noEmit"
   },
   "dependencies": {
