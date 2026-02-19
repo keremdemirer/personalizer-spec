@@ -16,7 +16,12 @@ const isBindingObject = (value: unknown): value is Record<string, string> => {
     return false;
   }
 
-  return ["$bind", "$bindAsset", "$bindColor"].includes(keys[0]);
+  const key = keys[0];
+  if (!key) {
+    return false;
+  }
+
+  return ["$bind", "$bindAsset", "$bindColor"].includes(key);
 };
 
 export const discoverBindingFields = (template: unknown): BindingField[] => {

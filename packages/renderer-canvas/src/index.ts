@@ -156,7 +156,8 @@ const loadFont = async (family: string, src: string): Promise<void> => {
 
   const face = new FontFace(family, `url(${src})`);
   await face.load();
-  document.fonts.add(face);
+  // TS libdom typing for FontFaceSet can vary by environment, so call add via a narrow cast.
+  (document.fonts as unknown as { add: (font: FontFace) => void }).add(face);
   fontCache.add(`${family}|${src}`);
 };
 
