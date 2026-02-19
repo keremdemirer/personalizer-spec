@@ -1,0 +1,14 @@
+{
+  "name": "@personalizer/spec",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "README.md",
+    "specs"
+  ],
+  "scripts": {
+    "build": "node -e \"console.log('spec package: no build step')\"",
+    "typecheck": "node -e \"console.log('spec package: no typecheck step')\""
+  }
+}

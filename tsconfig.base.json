@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "types": ["node"],
+    "paths": {
+      "@personalizer/core": ["packages/core/src/index.ts"],
+      "@personalizer/react": ["packages/react/src/index.ts"],
+      "@personalizer/renderer-client-canvas": [
+        "packages/renderer-client-canvas/src/index.ts"
+      ],
+      "@personalizer/renderer-server-chromium": [
+        "packages/renderer-server-chromium/src/index.ts"
+      ]
+    }
+  }
+}
