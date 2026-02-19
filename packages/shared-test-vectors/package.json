@@ -1,14 +1,15 @@
 {
   "name": "@personalizer/shared-test-vectors",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "files": [
     "fixtures",
-    "README.md"
+    "expected"
   ],
   "scripts": {
-    "test": "echo \"No tests for @personalizer/shared-test-vectors\"",
-    "typecheck": "echo \"No typecheck for @personalizer/shared-test-vectors\""
+    "build": "node -e \"console.log('shared-test-vectors: no build step')\"",
+    "test": "node -e \"console.log('shared-test-vectors: no tests')\"",
+    "typecheck": "node -e \"console.log('shared-test-vectors: no typecheck step')\""
   }
 }

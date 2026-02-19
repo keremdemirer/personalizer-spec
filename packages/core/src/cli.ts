@@ -1,185 +1,130 @@
-#!/usr/bin/env -S node --import tsx
+#!/usr/bin/env node
 
-import { readFileSync } from "node:fs";
-import { compile, computeRenderKey, resolveBindings, validateTemplates } from "./index.ts";
-import type { ValidationIssue } from "./types.ts";
+import { readFile } from "node:fs/promises";
+import {
+  BindingResolutionError,
+  resolveRenderModel,
+  validateTemplates,
+  type ValidationDiagnostic,
+  TemplateValidationError,
+  formatDiagnostics
+} from "./index.js";
 
-interface CliFlags {
-  design?: string;
-  effects?: string;
-  inputs?: string;
-}
-
-function printUsage(): void {
-  console.log(`personalizer CLI
-
-Usage:
+const usage = `Usage:
   personalizer validate --design <path> --effects <path>
-  personalizer resolve --design <path> --effects <path> --inputs <path>
-`);
-}
+  personalizer resolve --design <path> --effects <path> --inputs <path> [--assets <path>]`;
 
-function parseFlags(argv: string[]): CliFlags {
-  const flags: CliFlags = {};
+const parseOptions = (args: string[]): Record<string, string> => {
+  const out: Record<string, string> = {};
 
-  for (let i = 0; i < argv.length; i += 1) {
-    const token = argv[i];
-    const next = argv[i + 1];
-
-    if (!token || !token.startsWith("--") || !next || next.startsWith("--")) {
+  for (let index = 0; index < args.length; index += 1) {
+    const token = args[index];
+    if (!token?.startsWith("--")) {
       continue;
     }
 
-    const key = token.slice(2) as keyof CliFlags;
-    flags[key] = next;
-    i += 1;
-  }
+    const key = token.slice(2);
+    const value = args[index + 1];
 
-  return flags;
-}
-
-function readJson(path: string): unknown {
-  try {
-    const raw = readFileSync(path, "utf8");
-    return JSON.parse(raw);
-  } catch (error) {
-    throw new Error(`Failed reading JSON at ${path}: ${(error as Error).message}`);
-  }
-}
-
-function printErrors(label: string, errors: ValidationIssue[]): void {
-  console.error(`${label} failed with ${errors.length} error(s):`);
-  errors.forEach((error) => {
-    console.error(`- ${error.path}: ${error.message}`);
-  });
-}
-
-function parseInputPayload(raw: unknown): {
-  inputs: Record<string, unknown>;
-  uploads: Record<string, unknown>;
-  assetContentHashes: Record<string, string>;
-} {
-  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
-    throw new Error("inputs payload must be a JSON object");
-  }
-
-  const payload = raw as Record<string, unknown>;
-
-  const hasScopedKeys =
-    Object.prototype.hasOwnProperty.call(payload, "inputs") ||
-    Object.prototype.hasOwnProperty.call(payload, "uploads") ||
-    Object.prototype.hasOwnProperty.call(payload, "assetContentHashes");
-
-  if (!hasScopedKeys) {
-    return {
-      inputs: payload,
-      uploads: {},
-      assetContentHashes: {},
-    };
-  }
-
-  return {
-    inputs:
-      typeof payload.inputs === "object" && payload.inputs !== null && !Array.isArray(payload.inputs)
-        ? (payload.inputs as Record<string, unknown>)
-        : {},
-    uploads:
-      typeof payload.uploads === "object" && payload.uploads !== null && !Array.isArray(payload.uploads)
-        ? (payload.uploads as Record<string, unknown>)
-        : {},
-    assetContentHashes:
-      typeof payload.assetContentHashes === "object" &&
-      payload.assetContentHashes !== null &&
-      !Array.isArray(payload.assetContentHashes)
-        ? (payload.assetContentHashes as Record<string, string>)
-        : {},
-  };
-}
-
-async function main(): Promise<void> {
-  const [command, ...restArgs] = process.argv.slice(2);
-
-  if (!command || command === "-h" || command === "--help") {
-    printUsage();
-    return;
-  }
-
-  const flags = parseFlags(restArgs);
-
-  if (!flags.design || !flags.effects) {
-    printUsage();
-    throw new Error("Both --design and --effects are required");
-  }
-
-  const design = readJson(flags.design);
-  const effects = readJson(flags.effects);
-
-  const validation = validateTemplates(design, effects);
-  if (!validation.ok) {
-    printErrors("Validation", validation.errors);
-    process.exitCode = 1;
-    return;
-  }
-
-  if (command === "validate") {
-    console.log("Templates are valid.");
-    return;
-  }
-
-  if (command === "resolve") {
-    if (!flags.inputs) {
-      throw new Error("--inputs is required for resolve");
+    if (!value || value.startsWith("--")) {
+      throw new Error(`Missing value for --${key}`);
     }
 
-    const payload = parseInputPayload(readJson(flags.inputs));
+    out[key] = value;
+    index += 1;
+  }
 
-    const resolution = resolveBindings(validation.data.designTemplate, validation.data.effectsTemplate, {
-      inputs: payload.inputs,
-      uploads: payload.uploads,
-    });
+  return out;
+};
 
-    if (!resolution.ok) {
-      printErrors("Resolve", resolution.errors);
+const readJson = async (path: string): Promise<unknown> => {
+  const content = await readFile(path, "utf8");
+  try {
+    return JSON.parse(content) as unknown;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to parse JSON at '${path}': ${message}`);
+  }
+};
+
+const printDiagnostics = (diagnostics: ValidationDiagnostic[]): void => {
+  process.stderr.write(
+    `Validation failed with ${diagnostics.length} issue(s):\n${formatDiagnostics(diagnostics)}\n`
+  );
+};
+
+const main = async (): Promise<void> => {
+  const [command, ...args] = process.argv.slice(2);
+  if (!command || command === "-h" || command === "--help") {
+    process.stdout.write(`${usage}\n`);
+    return;
+  }
+
+  const options = parseOptions(args);
+
+  if (command === "validate") {
+    if (!options.design || !options.effects) {
+      throw new Error("validate requires --design and --effects");
+    }
+
+    const [designTemplate, effectsTemplate] = await Promise.all([
+      readJson(options.design),
+      readJson(options.effects)
+    ]);
+
+    const result = validateTemplates(designTemplate, effectsTemplate);
+    if (!result.ok) {
+      printDiagnostics(result.diagnostics);
       process.exitCode = 1;
       return;
     }
 
-    const plan = compile(
-      validation.data.designTemplate,
-      validation.data.effectsTemplate,
-      resolution.data.resolvedInputs,
-      {
-        assetContentHashes: payload.assetContentHashes,
-      },
-    );
-
-    const renderKey = computeRenderKey({
-      templateId: plan.templateId,
-      templateVersion: plan.templateVersion,
-      sceneId: plan.sceneId,
-      resolvedInputs: resolution.data.resolvedInputs,
-      assetContentHashes: payload.assetContentHashes,
-    });
-
-    console.log(
-      JSON.stringify(
-        {
-          renderKey,
-          renderPlan: plan,
-          renderModel: resolution.data,
-        },
-        null,
-        2,
-      ),
-    );
+    process.stdout.write("Templates are valid.\n");
     return;
   }
 
-  printUsage();
+  if (command === "resolve") {
+    if (!options.design || !options.effects || !options.inputs) {
+      throw new Error("resolve requires --design, --effects, and --inputs");
+    }
+
+    const [designTemplate, effectsTemplate, inputs, assets] = await Promise.all([
+      readJson(options.design),
+      readJson(options.effects),
+      readJson(options.inputs),
+      options.assets ? readJson(options.assets) : Promise.resolve({})
+    ]);
+
+    if (!inputs || typeof inputs !== "object" || Array.isArray(inputs)) {
+      throw new Error("inputs must be a JSON object");
+    }
+
+    if (!assets || typeof assets !== "object" || Array.isArray(assets)) {
+      throw new Error("assets must be a JSON object when provided");
+    }
+
+    const renderModel = resolveRenderModel({
+      designTemplate,
+      effectsTemplate,
+      inputs: inputs as Record<string, unknown>,
+      assets: assets as Record<string, unknown>
+    });
+
+    process.stdout.write(`${JSON.stringify(renderModel, null, 2)}\n`);
+    return;
+  }
+
   throw new Error(`Unknown command '${command}'`);
-}
+};
 
 main().catch((error) => {
-  console.error((error as Error).message);
+  if (error instanceof TemplateValidationError || error instanceof BindingResolutionError) {
+    process.stderr.write(`${error.message}\n`);
+    process.exitCode = 1;
+    return;
+  }
+
+  const message = error instanceof Error ? error.message : String(error);
+  process.stderr.write(`${message}\n\n${usage}\n`);
   process.exitCode = 1;
 });

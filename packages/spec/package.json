@@ -1,14 +1,15 @@
 {
   "name": "@personalizer/spec",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "files": [
-    "specs",
-    "README.md"
+    "README.md",
+    "specs"
   ],
   "scripts": {
-    "test": "echo \"No tests for @personalizer/spec\"",
-    "typecheck": "echo \"No typecheck for @personalizer/spec\""
+    "build": "node -e \"console.log('spec package: no build step')\"",
+    "test": "node -e \"console.log('spec package: no tests')\"",
+    "typecheck": "node -e \"console.log('spec package: no typecheck step')\""
   }
 }

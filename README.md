@@ -1,50 +1,95 @@
-# personalizer monorepo
+# personalizer
 
-This repository bootstraps the OSS developer library plus Pro renderer stubs for the v1 personalizer specs.
+TypeScript pnpm monorepo for a client-side product personalization SDK built around Web Components.
 
 ## Packages
 
-- `@personalizer/spec`: versioned spec docs copied from `personalizer-spec`
-- `@personalizer/core`: core TypeScript types, strict validation, reference checks, binding resolution, render key utilities, and CLI
-- `@personalizer/react`: minimal React-facing wrapper utilities over core
-- `@personalizer/renderer-client-canvas`: browser renderer contract stub
-- `@personalizer/renderer-server-chromium`: server renderer contract stub
-- `@personalizer/shared-test-vectors`: JSON fixtures and expected deterministic outputs
+- `packages/spec`
+  - Copy of versioned specs and examples (Design v1, Effects v1, Geometry v1)
+- `packages/core`
+  - Strict zod-based validation, ref/link checks, binding resolution, canonical JSON, renderKey, and compile API
+- `packages/renderer-canvas`
+  - Canvas2D scene preview renderer with `renderToCanvas` and `renderToBlob`
+- `packages/elements`
+  - `<personalizer-editor>` Custom Element implemented in vanilla TypeScript
+- `packages/shared-test-vectors`
+  - Shared fixtures and expected normalization/hash outputs
+- `examples/vanilla`
+  - Vite demo app that mounts `<personalizer-editor>` and exports PNG
 
-## Quick start
+## What Works Now
+
+- Spec-aligned types and strict checks:
+  - `opacity` range `0-100`
+  - color formats `#RRGGBB` and `#RRGGBBAA`
+  - rect unit `px | pct`
+  - effect step field `operation` with `core.*` namespace
+  - effect refs only via `{ "$ref": "effect:<chainId>" }`
+  - design/effects `templateId` and `templateVersion` linking
+- Ref validation:
+  - missing `node:<id>` refs fail
+  - missing `effect:<chainId>` refs fail
+- Binding resolution:
+  - supports `{$bind}`, `{$bindAsset}`, `{$bindColor}`
+  - deterministic normalization: trim spaces/tabs, NFC, CRLF to LF
+- Deterministic renderKey:
+  - SHA-256 hex over canonical sorted JSON using
+    - `templateId`
+    - `templateVersion`
+    - `sceneId`
+    - resolved inputs
+    - asset content hashes (passed in)
+- Canvas renderer v0:
+  - node types: `container`, `image`, `text`, `fill`
+  - render order: `background`, `overlay`, `design`, `designOverlay`
+  - `px` and `pct` layout
+  - anchor placement
+  - opacity and `Normal` blend mode
+- Web Component:
+  - `<personalizer-editor></personalizer-editor>`
+  - properties: `designTemplate`, `effectsTemplate`, `inputs`, `assets`, `scene`
+  - methods: `validate`, `getResolvedModel`, `exportPreview`, `getOrderPayload`
+  - events: `personalizer:change`, `personalizer:preview`
+  - minimal UI: preview canvas, generated binding form, upload slots
+
+## What Is Stubbed
+
+- Blend modes other than `Normal` are currently mapped to `source-over`
+- Effects execution pipeline is not implemented yet
+- Advanced text layout/alignment and shape rendering are not implemented
+- Full editor UX and schema-driven field typing are minimal in v0
+
+## Install And Test
 
 ```bash
 pnpm install
-pnpm test
-pnpm personalizer validate \
-  --design packages/shared-test-vectors/fixtures/minimal-design.json \
-  --effects packages/shared-test-vectors/fixtures/minimal-effects.json
-pnpm personalizer resolve \
-  --design packages/shared-test-vectors/fixtures/minimal-design.json \
-  --effects packages/shared-test-vectors/fixtures/minimal-effects.json \
-  --inputs packages/shared-test-vectors/fixtures/inputs-normalization.json
+pnpm -r test
+pnpm -r build
 ```
 
-## What works now
+## Web Component Embed
 
-- Design v1, Effects v1, Geometry v1 shape definitions in TypeScript
-- Strict validator for required fields and semantic linking checks
-- Binding resolver for `$bind`, `$bindAsset`, `$bindColor`
-- String normalization for determinism (`CRLF -> LF`, trim spaces/tabs, NFC)
-- Stable SHA-256 `renderKey` from canonical JSON
-- CLI commands:
-  - `pnpm personalizer validate --design <path> --effects <path>`
-  - `pnpm personalizer resolve --design <path> --effects <path> --inputs <path>`
+After building `@personalizer/elements`, load one module script and use the custom element.
 
-## Stubbed intentionally
+```html
+<script type="module" src="/node_modules/@personalizer/elements/dist/personalizer-editor.js"></script>
+<personalizer-editor id="editor"></personalizer-editor>
+```
 
-- Full rendering logic and production UI editor
-- Chromium orchestration and deployment concerns
-- Asset binary hashing from file contents
+Then set templates and inputs from JavaScript:
 
-## Next steps
+```js
+const editor = document.getElementById("editor");
+editor.designTemplate = designTemplate;
+editor.effectsTemplate = effectsTemplate;
+editor.inputs = { name: "Kero" };
+editor.assets = { uploads: {}, contentHashes: {} };
+```
 
-1. Implement operation execution in renderer packages using an allowlist by target.
-2. Expand scene-level compile planning and target-specific failure policy.
-3. Add richer editor components in `@personalizer/react`.
-4. Add cross-package integration tests for renderer contracts.
+## Run Example
+
+```bash
+pnpm -C examples/vanilla dev
+```
+
+Open the local Vite URL. The page loads minimal templates, updates preview live, and supports PNG export.

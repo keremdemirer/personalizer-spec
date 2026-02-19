@@ -1,10 +1,13 @@
-# @personalizer/spec
+# personalizer-spec
 
-Copied spec documents from the `personalizer-spec` repository.
+Versioned specifications for a product personalization system (Design + Effects + Geometry).
 
-Contents include:
-- `specs/design/v1`
-- `specs/effects/v1`
-- `specs/geometry/v1`
-- `specs/common`
-- `specs/examples`
+## Structure
+- `specs/geometry/v1/` - foundational geometry types (rect, color, transform, units, etc.)
+- `specs/design/v1/` - scenes and nodes (layout and composition)
+- `specs/effects/v1/` - effect chains (operation + params), referenced from design nodes
+- `specs/common/` - glossary, bindings, security, linking, versioning
+
+These specs are intended to be renderer-agnostic:
+- Client preview renderers (Canvas/SVG/WebGL)
+- Server renderers (Headless Chromium, native render, etc.)

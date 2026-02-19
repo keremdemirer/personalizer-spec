@@ -1,17 +1,25 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "allowImportingTsExtensions": true,
     "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "declarationMap": true
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "types": ["node"],
+    "paths": {
+      "@personalizer/core": ["packages/core/src/index.ts"],
+      "@personalizer/renderer-canvas": ["packages/renderer-canvas/src/index.ts"],
+      "@personalizer/elements": ["packages/elements/src/index.ts"],
+      "@personalizer/elements/register": ["packages/elements/src/register.ts"]
+    }
   }
 }

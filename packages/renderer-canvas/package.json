@@ -1,12 +1,9 @@
 {
-  "name": "@personalizer/core",
+  "name": "@personalizer/renderer-canvas",
   "version": "0.2.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "bin": {
-    "personalizer": "dist/cli.js"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -17,12 +14,12 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && chmod +x dist/cli.js",
-    "test": "vitest run --root ../../ packages/core/test/core.test.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run --root ../../ packages/renderer-canvas/test/renderer-canvas.test.ts",
     "typecheck": "tsc -p tsconfig.build.json --noEmit"
   },
   "dependencies": {
-    "zod": "^3.24.1"
+    "@personalizer/core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.3",
