@@ -1,0 +1,26 @@
+{
+  "name": "@personalizer/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "personalizer": "src/cli.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "tsx": "^4.19.3",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "@personalizer/shared-test-vectors": "workspace:*",
+    "typescript": "^5.8.2",
+    "vitest": "^2.1.9"
+  }
+}

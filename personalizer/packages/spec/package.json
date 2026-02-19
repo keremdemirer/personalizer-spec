@@ -1,0 +1,14 @@
+{
+  "name": "@personalizer/spec",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "specs",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "echo \"No tests for @personalizer/spec\"",
+    "typecheck": "echo \"No typecheck for @personalizer/spec\""
+  }
+}

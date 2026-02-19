@@ -1,0 +1,19 @@
+{
+  "name": "@personalizer/renderer-server-chromium",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@personalizer/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  },
+  "scripts": {
+    "test": "echo \"No tests for @personalizer/renderer-server-chromium\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}
